@@ -1,0 +1,30 @@
+/* Defino la clase que usé en el <div> principal */
+.contenedor-agendar-turno {
+    background-color: #f4f7f6; /* Fondo suave para la página */
+    padding: 50px 20px; /* Espacio interno */
+    text-align: center; /* Centrar el texto */
+    min-height: 100vh; /* Ocupar toda la altura de la vista */
+    font-family: Arial, sans-serif;
+}
+
+/* Estilos para el título principal */
+.contenedor-agendar-turno h1 {
+    color: #007bff; /* Un color azul brillante */
+    margin-bottom: 10px;
+    border-bottom: 2px solid #007bff; /* Una línea debajo del título */
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* Estilos para el párrafo de instrucción */
+.contenedor-agendar-turno p {
+    color: #555;
+    font-size: 1.1em;
+    margin-bottom: 30px;
+}
+
+/* NOTA  
+Los estilos para el formulario en sí (inputs, botones) 
+deberían ir preferiblemente en un archivo CSS asociado a FormularioTurno.jsx, 
+por ejemplo, 'FormularioTurno.css', para mantener la modularidad.
+*/

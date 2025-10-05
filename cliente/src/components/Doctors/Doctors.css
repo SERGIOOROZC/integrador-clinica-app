@@ -1,0 +1,90 @@
+
+
+.doctors-section {
+    padding: 40px 20px;
+    background-color: #0d1117; /* Fondo oscuro principal para armonizar con el Navbar */
+    color: #fff;
+    border-radius: 12px;
+    min-height: 100vh;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 4.5rem;
+    margin-bottom: 40px;
+    color: #6366f1; /* Color de acento (similar al botón de registro) */
+    
+}
+
+.doctors-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Permite que las tarjetas se envuelvan en pantallas pequeñas */
+    gap: 30px;
+}
+
+.doctor-card {
+    background-color: #161b22; /* Un gris oscuro, ligeramente más claro que el fondo */
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    width: 100%;
+    max-width: 300px; /* Ancho máximo para mantener las tarjetas uniformes */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.doctor-card:hover {
+    transform: translateY(-5px); /* Pequeño efecto de levantamiento al pasar el ratón */
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2); /* Sombra con el color de acento */
+}
+
+/* Estilo para el Avatar (Inicial del Nombre) */
+.doctor-avatar {
+    width: 80px;
+    height: 80px;
+    background-color: #6366f1; /* El color de acento */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 15px;
+    border: 3px solid #4f46e5; /* Borde más oscuro */
+}
+
+.doctor-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.doctor-card p {
+    color: #9ca3af; /* Gris claro para la especialidad (menos prominente) */
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+/* Estilo para el botón Agendar Turno (similar al botón 'Register' del Navbar) */
+.btn-turno {
+    background-color: #6366f1;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s;
+    width: 100%;
+}
+
+.btn-turno:hover {
+    background-color: #4f46e5;
+    transform: translateY(-1px);
+}

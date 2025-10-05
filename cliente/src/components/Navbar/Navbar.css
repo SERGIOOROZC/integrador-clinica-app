@@ -1,0 +1,71 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #0d1117; /* mismo fondo que antes */
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Logo */
+.navbar-logo .logo-text {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Menú centrado */
+.navbar-menu {
+  display: flex;
+  gap: 32px; /* espacio entre enlaces */
+  flex: 1;
+  justify-content: center; /* centra horizontalmente */
+}
+
+.navbar-menu .nav-link {
+  color: #fff; /* letras blancas */
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.navbar-menu .nav-link:hover {
+  color: #6366f1; /* efecto hover igual a los botones */
+}
+
+/* Botones derecha */
+.navbar-links {
+  display: flex;
+  gap: 12px;
+}
+
+.navbar-links .signin,
+.navbar-links .register {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.navbar-links .signin {
+  background-color: #1f2937;
+  color: #fff;
+}
+
+.navbar-links .signin:hover {
+  background-color: #374151;
+}
+
+.navbar-links .register {
+  background-color: #6366f1;
+  color: #fff;
+}
+
+.navbar-links .register:hover {
+  background-color: #4f46e5;
+}

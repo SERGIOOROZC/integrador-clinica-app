@@ -1,0 +1,35 @@
+estructura:
+
+index.html: tenes div con el root + un script => main.jsx
+main.jsx: se importan el createRoot de la libreria react para escritorio
+el createRoot selecciona el id root para renderizar el sitio web
+dentro del render esta la etiqueta <StrictMode> que ejecuta 2 veces modo seguro
+dentro de <StrictMode> esta la <App /> aca esta "toda" la pagina
+App.jsx aca App retorna  las funciones-componentes 
+
+eliminar los archivos index.css y App.css, así como sus referencias para evitar problemas
+• import './index.css' en el archivo main.jsx
+• import './App.css' en el archivo App.jsx
+
+crear las carpetas “styles”, “components” y “pages” dentro de la carpeta /src
+• dentro de la carpeta /src/styles crear el archivo styles.css
+• dentro de la carpeta /src/pages crear los componentes Home.jsx y Login.jsx
+• dentro de la carpeta /src/components crear el componente Navbar.jsx
+
+
+**creo una funcion**
+function Menu() {
+    return (escribo el componente en html );
+}
+
+
+**llamo la funcion**
+function App() {
+    return (
+        <>
+        { Menu() }
+        { Header() }
+        { Footer() }
+        </>
+    );
+}

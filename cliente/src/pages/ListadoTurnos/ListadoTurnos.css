@@ -1,0 +1,84 @@
+/* src/pages/ListadoTurno/ListadoTurnos.css */
+
+/* --- Contenedor Principal --- */
+.seccion-turnos {
+    max-width: 1200px;
+    margin: 40px auto; /* Centra el contenido en la página */
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.seccion-turnos h1 {
+    text-align: center;
+    color: #007bff; /* Un azul profesional */
+    margin-bottom: 30px;
+    font-size: 2em;
+}
+
+/* --- Mensajes de Estado --- */
+.cargando-pagina, .error-pagina {
+    text-align: center;
+    font-size: 1.2em;
+    padding: 50px;
+    color: #6c757d;
+}
+
+/* --- Estilos de la Tabla --- */
+.tabla-turnos {
+    width: 100%; /* Ocupa todo el ancho del contenedor */
+    border-collapse: separate; /* Permite bordes espaciados */
+    border-spacing: 0;
+    font-size: 0.95em;
+    text-align: left;
+    overflow: hidden; /* Oculta el overflow para los bordes redondeados */
+    border-radius: 8px; /* Bordes redondeados para toda la tabla */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.tabla-turnos thead {
+    background-color: #007bff; /* Fondo azul para el encabezado */
+    color: white; /* Texto blanco */
+}
+
+.tabla-turnos th {
+    padding: 12px 15px;
+    font-weight: 600; /* Un poco más de grosor para las cabeceras */
+    border-bottom: 2px solid #0056b3;
+}
+
+/* --- Filas y Celdas --- */
+.tabla-turnos td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #dee2e6; /* Línea separadora suave */
+    /* Color de fondo por defecto */
+    background-color: #f8f9fa;
+}
+
+/* Estilo para filas pares/impares (mejor legibilidad) */
+.tabla-turnos tbody tr:nth-child(even) td {
+    background-color: #e9ecef; 
+}
+
+/* Efecto hover en las filas */
+.tabla-turnos tbody tr:hover td {
+    background-color: #cfe2ff; /* Color al pasar el mouse */
+    cursor: default;
+}
+
+/* Remover el borde inferior de la última fila */
+.tabla-turnos tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Título de No hay turnos --- */
+.seccion-turnos p {
+    text-align: center;
+    font-size: 1.1em;
+    color: #dc3545; /* Rojo para destacar la ausencia de datos */
+    padding: 20px;
+    border: 1px dashed #dc3545;
+    border-radius: 5px;
+    margin-top: 20px;
+}
