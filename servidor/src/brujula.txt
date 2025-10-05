@@ -1,0 +1,29 @@
+sigo este camino para ver el paso a paso
+
+app.js -> turno:routes.js -> turno.controller.js -> turno.models.js -> devuelve json
+
+
+
+
+endpoints:
+
+paciente.routes.js : 
+
+POST Registrar paciente (admin o un usuario que se registre como paciente) 
+GET  Ver turnos de un paciente (el propio paciente o el admin)   
+
+medico.routes.js:
+
+POST Registrar médico (solo lo puede hacer un admin) 
+GET  Ver turnos de un médico (el propio médico o el admin)
+
+turnos.router.js:
+
+GET     Listar turnos ( Admin ve todos, médico ve sus turnos, paciente ve sus propios turnos)
+POST    Crear turno (Solo admin o médico pueden crear turnos)
+DELETE  Borrar turno (Solo admin o médico pueden borrar)
+
+usuario.routes.js
+
+POST    Cualquier persona puede registrarse (crear usuario)
+GET     Solo los admin pueden listar usuarios

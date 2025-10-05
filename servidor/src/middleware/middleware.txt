@@ -1,0 +1,24 @@
+Un middleware en Express es una función que se ejecuta antes de que se procese la ruta final. Puede:
+
+Validar datos
+
+Autenticar usuarios
+
+Verificar roles
+
+Interrumpir la ejecución si algo está mal
+
+O permitir que siga a la siguiente función (next())
+
+/src
+  ├── controllers/
+  ├── routes/
+  ├── middleware/
+      ├── auths.js         ← 🔐 Verifica token y rol
+      ├── validaciones.js  ← ✅ Valida campos del body
+  ├── config/
+  ├── app.js
+
+¿Cómo se "conectan"?
+
+Tus middlewares se importan en los archivos de rutas donde querés usarlos.
