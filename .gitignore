@@ -1,8 +1,14 @@
-# Node.js
-node_modules/
-npm-debug.log
-.env
+# Node.js (backend)
+servidor/node_modules/
+servidor/npm-debug.log
+servidor/.env
 
-# React
-build/
-dist/
+# React (frontend)
+cliente/node_modules/
+cliente/.env
+cliente/build/
+cliente/dist/
+
+# Archivos generales del proyecto
+*.log
+.DS_Store
