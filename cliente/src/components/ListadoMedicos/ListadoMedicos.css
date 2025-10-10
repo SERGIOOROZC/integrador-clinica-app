@@ -1,0 +1,125 @@
+/* ========================================================== */
+/* SECCIÓN PRINCIPAL Y FONDO (Similar a Home) */
+/* ========================================================== */
+.listado-medicos-section {
+    position: relative;
+    /* Usamos min-height para que ocupe toda la vista */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 2rem; 
+    background-color: #0d1117; /* Fondo oscuro (IDEM Home) */
+    color: #e5e7eb; /* Texto base claro */
+    overflow: hidden;
+}
+
+/* Fondo borroso (IDEM Home, pero ajustado para la parte superior) */
+.blurred-shape-container {
+    position: absolute;
+    top: 50px; /* Más abajo que en Home */
+    right: 50px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(129,140,248,0.25), transparent 70%);
+    filter: blur(100px);
+    z-index: 0;
+}
+
+/* ========================================================== */
+/* TÍTULOS Y TEXTO */
+/* ========================================================== */
+.listado-medicos-section h1 {
+    font-size: 3rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 10;
+    /* Aplicamos el gradiente animado del Home al título principal */
+    background: linear-gradient(
+        to right,
+        #e5e7eb,
+        #3f4aa8,
+        #f9fafb
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient 6s linear infinite;
+}
+
+.listado-medicos-section p {
+    font-size: 1.1rem;
+    color: #9ca3af; /* Color gris suave */
+    margin-bottom: 3rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* Animación de gradiente (IDEM Home) */
+@keyframes gradient {
+    0% {
+        background-position: 0% center;
+    }
+    50% {
+        background-position: 100% center;
+    }
+    100% {
+        background-position: 0% center;
+    }
+}
+
+
+/* ========================================================== */
+/* CUADRÍCULA DE MÉDICOS Y TARJETAS */
+/* ========================================================== */
+.medicos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    position: relative;
+    z-index: 10;
+}
+
+.medico-card {
+    background-color: #1f2937; /* Fondo oscuro sutil */
+    border: 1px solid #374151; /* Borde sutil */
+    padding: 1.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    
+    /* Pequeño toque de brillo al pasar el ratón */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.medico-card:hover {
+    transform: translateY(-5px);
+    border-color: #6366f1; /* Borde con color primario al pasar el ratón */
+    box-shadow: 0 8px 15px rgba(99, 102, 241, 0.15);
+}
+
+.medico-card h3 {
+    font-size: 1.75rem;
+    color: #f3f4f6; /* Título claro */
+    margin-bottom: 0.5rem;
+}
+
+.medico-card p {
+    font-size: 1rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.medico-card strong {
+    color: #818cf8; /* Color de acento para la especialidad */
+    font-weight: 500;
+}
+
+/* Botón de Selección (Similar a btn-primary del Home) */
+.btn-select {
+    background-color: #6366f1; /* Color primario */
+    color: #fff;
+    padding: 0.75rem 1

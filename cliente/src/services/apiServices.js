@@ -1,12 +1,100 @@
+// src/services/apiServices.js
+
+// 🔑 Configuración: URL base de tu backend
+// Importante: No lleva '/api' para que coincida con la configuración de tu app.js
+const BASE_URL = 'http://localhost:3000'; 
+
+// =========================================================
+// 1. AUTENTICACIÓN (LOGIN)
+// =========================================================
+
+/**
+ * Función para INICIAR SESIÓN
+ * @param {object} credenciales - { email, password }
+ */
+export const loginAPI = async (credenciales) => {
+    // La URL es http://localhost:3000/usuario/login
+    const url = `${BASE_URL}/usuario/login`; 
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credenciales),
+        });
+
+        const body = await response.json();
+
+        if (response.ok) {
+            // Devuelve el objeto con token, usuario, etc.
+            return body; 
+        } else {
+            // Manejo de errores 400/500 del backend
+            throw new Error(body.error || body.mensaje || "Credenciales incorrectas o error desconocido.");
+        }
+    } catch (error) {
+        console.error("Error en loginAPI:", error);
+        throw error;
+    }
+};
 
 
-const BASE_URL = 'http://localhost:3000/api'; 
+// =========================================================
+// 2. MÉDICOS (Listado para Reserva)
+// =========================================================
+
+/**
+ * Función para OBTENER la lista completa de médicos.
+ * @returns {Promise<Array>} Un array de objetos médico.
+ */
+export const obtenerMedicosAPI = async () => {
+    
+    const token = sessionStorage.getItem('token'); 
+    
+    if (!token) {
+        throw new Error("No estás autenticado para ver la lista de médicos.");
+    }
+
+    try {
+        // RUTA: http://localhost:3000/medico
+        const url = `${BASE_URL}/medico`; 
+        
+        const parametros = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` 
+            },
+        };
+
+        const response = await fetch(url, parametros);
+        const body = await response.json();
+
+        if (response.ok) {
+            // Retornamos body.medicos que es el array devuelto por el backend
+            return body.medicos || []; 
+        } else {
+            throw new Error(body.error || "No se pudo cargar la lista de médicos."); 
+        }
+    } catch (error) {
+        console.error("Error al obtener médicos:", error);
+        throw error;
+    }
+};
 
 
-// 🔑 Función para CREAR un turno 
+// =========================================================
+// 3. TURNOS (Creación y Consulta)
+// =========================================================
+
+/**
+ * Función para CREAR un turno
+ * @param {object} datosTurno - Incluye id_medico, id_paciente, fecha, hora, etc.
+ */
 export const crearTurnoAPI = async (datosTurno) => {
     
-    // 1. Obtener el Token: Necesario para la ruta protegida
     const token = sessionStorage.getItem('token'); 
     
     if (!token) {
@@ -14,28 +102,24 @@ export const crearTurnoAPI = async (datosTurno) => {
     }
 
     try {
-        // ⚠️ RUTA: Asumimos que la ruta en el Backend es POST /api/turnos
-        const url = `${BASE_URL}/turnos`; 
+        // RUTA: http://localhost:3000/turnos
+        const url = `${BASE_URL}/turno`; // Usamos '/turno' ya que app.js usa ese prefijo
         
         const parametros = {
-            method: "POST", // Usamos POST para crear un nuevo recurso
+            method: "POST", 
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` // Enviamos el Token
+                "Authorization": `Bearer ${token}` 
             },
-            // Enviamos los datos del turno en el body
             body: JSON.stringify(datosTurno) 
         };
 
         const response = await fetch(url, parametros);
-        
         const body = await response.json();
 
         if (response.ok) {
-            // Éxito
             return body; 
         } else {
-            // Error (ej: validación fallida, médico no disponible)
             throw new Error(body.error || "No se pudo crear el turno."); 
         }
     } catch (error) {
@@ -44,41 +128,39 @@ export const crearTurnoAPI = async (datosTurno) => {
     }
 };
 
-//  Función para obtener la lista de turnos (la que ya tenías)
+/**
+ * Función para obtener la lista de turnos
+ * @param {object} filtros - Opcional. Usado para filtrar.
+ */
 export const obtenerTurnosAPI = async (filtros = {}) => {
     
-    // 1. 🔑 Obtener el Token: Es necesario para que el Backend sepa quién eres.
     const token = sessionStorage.getItem('token'); 
     
     if (!token) {
         throw new Error("No estás autenticado.");
     }
 
-    // 2. ⚙️ Construir los parámetros de consulta (Query Params)
+    // Construir los parámetros de consulta (Query Params)
     let queryParams = new URLSearchParams(filtros).toString();
     
     try {
-        // RUTA: Asumimos que la ruta en el Backend es GET /api/turnos
-        const url = `${BASE_URL}/turnos?${queryParams}`; 
+        // RUTA: http://localhost:3000/turnos
+        const url = `${BASE_URL}/turno?${queryParams}`; 
         
         const parametros = {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                // ENVIAMOS EL TOKEN
                 "Authorization": `Bearer ${token}` 
             },
         };
 
         const response = await fetch(url, parametros);
-        
         const body = await response.json();
 
         if (response.ok) {
-            // Éxito
             return body; 
         } else {
-            // Error
             throw new Error(body.error || "No se pudo cargar la lista de turnos."); 
         }
     } catch (error) {
@@ -86,5 +168,3 @@ export const obtenerTurnosAPI = async (filtros = {}) => {
         throw error;
     }
 };
-
-// [ ... Aquí irían tus funciones de logueo y registro (loginAPI, registerAPI) ... ]

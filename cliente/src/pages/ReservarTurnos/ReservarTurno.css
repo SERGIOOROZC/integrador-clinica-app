@@ -1,0 +1,113 @@
+/* src/pages/ReservarTurnos/ReservarTurno.css */
+
+/* ---------------------------------- */
+/* 1. Contenedor Principal y Títulos */
+/* ---------------------------------- */
+
+.pagina-reserva-medicos {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: 'Arial', sans-serif;
+}
+
+.pagina-reserva-medicos h1 {
+    color: #007bff; /* Azul primario */
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 2.5em;
+}
+
+.pagina-reserva-medicos h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.5em;
+}
+
+.cargando-pagina {
+    text-align: center;
+    padding: 50px;
+    font-size: 1.2em;
+    color: #007bff;
+}
+
+/* ---------------------------------- */
+/* 2. Estructura de la Lista (Grid) */
+/* ---------------------------------- */
+
+.lista-medicos-grid {
+    display: grid;
+    /* Muestra 3 tarjetas por fila en pantallas grandes */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 30px;
+    padding: 0 10px;
+}
+
+.medico-card {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Empuja el botón hacia abajo si es necesario */
+}
+
+.medico-card:hover {
+    transform: translateY(-5px); /* Pequeño efecto de elevación */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.medico-card h3 {
+    color: #333;
+    font-size: 1.4em;
+    margin-bottom: 5px;
+}
+
+.medico-card p {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 1em;
+}
+
+.medico-card p strong {
+    color: #007bff;
+}
+
+/* ---------------------------------- */
+/* 3. Botón de Reserva */
+/* ---------------------------------- */
+
+.medico-card button {
+    padding: 10px 15px;
+    background-color: #28a745; /* Color de éxito (verde) */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-top: auto; /* Asegura que el botón se alinee en la parte inferior */
+}
+
+.medico-card button:hover {
+    background-color: #1e7e34;
+}
+
+/* ---------------------------------- */
+/* 4. Responsive (Ajustes para móviles) */
+/* ---------------------------------- */
+
+@media (max-width: 768px) {
+    .pagina-reserva-medicos {
+        margin: 20px;
+    }
+    .lista-medicos-grid {
+        /* En móvil, solo 1 columna (o deja que auto-fit haga el trabajo) */
+        grid-template-columns: 1fr; 
+        gap: 20px;
+    }
+}

@@ -1,29 +1,61 @@
-
-
-import React, { useState } from 'react';
-// 🔑 Importamos el contexto para obtener la identidad del paciente
-import { useAuth } from '../../context/AuthContext';  
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';  
 import { toast } from 'react-toastify'; 
-// Asumimos que tienes una función en tu apiServices.js que hace el POST.
-import { crearTurnoAPI } from '../../services/apiServices'; 
+import { crearTurnoAPI, obtenerMedicosAPI } from '../../services/apiServices'; 
+import { useNavigate } from 'react-router-dom'; 
 
-const FormularioTurno = () => {
-    // 1. 🔑 Usamos el Contexto de Autenticación para saber quién es el usuario
-    const { usuario } = useAuth(); 
+// 🔑 Importamos los estilos para el formulario
+import './FormularioTurno.css'; 
 
-    // 2. El estado solo guarda lo que el paciente REALMENTE selecciona o escribe.
+// 🔑 CLAVE: Recibimos idMedico como una propiedad
+const FormularioTurno = ({ idMedico }) => { 
+    // 1. Contexto y Navegación
+    const { usuario } = useAuth();
+    const navigate = useNavigate();
+
+    // 2. Estado para los datos del formulario
     const [datosTurno, setDatosTurno] = useState({
-        // ⚠️ Placeholder: DEBE ser una selección real, pronto lo haremos dinámico
-        idMedico: '101', 
         fecha: '',
         hora: '',
         motivo: ''
     });
-
+    
+    // 3. Estado para la info del médico seleccionado
+    const [medicoInfo, setMedicoInfo] = useState({ nombre: 'Cargando...', especialidad: '' });
     const [mensaje, setMensaje] = useState('');
-    // Añadimos un estado para saber si el mensaje es de éxito o error (para el CSS)
     const [esExito, setEsExito] = useState(false); 
-    let confToast = { position: "top-right", autoClose: 3000, theme: "light" };
+    const confToast = { position: "top-right", autoClose: 3000, theme: "light" };
+
+    // 💡 Efecto para cargar el nombre del médico usando el idMedico
+    useEffect(() => {
+        // Se ejecuta solo si se recibe un ID válido
+        if (!idMedico) return;
+
+        const cargarInfoMedico = async () => {
+            try {
+                const medicos = await obtenerMedicosAPI();
+                
+                // ✅ CORRECCIÓN 1: Buscar por m.id (el alias de la DB)
+                // Usamos .toString() para asegurar la comparación, ya que idMedico viene de la URL (string)
+                const seleccionado = medicos.find(m => m.id.toString() === idMedico.toString());
+
+                if (seleccionado) {
+                    setMedicoInfo({
+                        nombre: `${seleccionado.nombre} ${seleccionado.apellido}`,
+                        // ✅ CORRECCIÓN 2: Usar 'especialidad' (el alias de la DB)
+                        especialidad: seleccionado.especialidad || 'Especialista'
+                    });
+                } else {
+                    setMedicoInfo({ nombre: 'Médico no encontrado', especialidad: '' });
+                }
+            } catch (error) {
+                console.error("Error al cargar info del médico:", error);
+                setMedicoInfo({ nombre: 'Error al cargar médico', especialidad: '' });
+            }
+        };
+
+        cargarInfoMedico();
+    }, [idMedico]); 
 
     // Función para actualizar los campos
     const manejarCambio = (e) => {
@@ -37,102 +69,85 @@ const FormularioTurno = () => {
     const enviarTurno = async (e) => {
         e.preventDefault(); 
         setMensaje('Agendando turno...');
-        setEsExito(false); // Reiniciamos el estado de éxito
+        setEsExito(false);
         
-        // 3. 🛡️ CONSTRUCCIÓN DEL OBJETO FINAL
+        // 🛡️ CONSTRUCCIÓN DEL OBJETO FINAL
         const datosFinales = {
-            id_paciente: usuario.id, // ¡CLAVE! ID del paciente logueado
-            id_medico: datosTurno.idMedico,
+            id_paciente: usuario.id,    // ID del paciente logueado (desde AuthContext)
+            id_medico: idMedico,        // ID del médico seleccionado (desde la URL)
             fecha: datosTurno.fecha,
             hora: datosTurno.hora,
             motivo: datosTurno.motivo,
-            estado: 'Pendiente' // Estado inicial
+            estado: 'Pendiente'         // Estado inicial
         };
 
         try {
-            // Llamamos a la función API
-            const response = await crearTurnoAPI(datosFinales);
+            await crearTurnoAPI(datosFinales);
 
-            setMensaje(`✅ ¡Turno agendado con éxito! ID: ${response.id}`);
-            setEsExito(true); // Marcamos éxito
             toast.success("Turno reservado con éxito!", confToast);
-            
-            // Limpiamos el formulario
-            setDatosTurno({ idMedico: '101', fecha: '', hora: '', motivo: '' });
+            // Redirigir a la página de turnos reservados
+            navigate('/misturnos'); 
 
         } catch (error) {
-            // Manejo de errores
-            const errorMessage = error.response?.data?.message || error.message;
+            const errorMessage = error.response?.data?.message || error.message || "Error de conexión con el servidor.";
             setMensaje(` ❌ Error: ${errorMessage}`);
-            setEsExito(false); // Marcamos error
+            setEsExito(false);
             toast.error(errorMessage, confToast);
-            console.error('Error al enviar turno:', error);
         }
     };
 
     return (
-        // 🎯 ÚNICO FORMULARIO: Aquí se define qué función se ejecuta al presionar "submit"
-        <form onSubmit={enviarTurno}> 
-            
-            {/* El <div> es solo para estilos, no para la lógica de envío */}
-            <div className="formulario-turno"> 
-                <h2>Agendar Nuevo Turno</h2>
-                
-                {/* ⚠️ Campo Médico: Será un Select en el siguiente paso */}
-                <div className="form-grupo">
-                    <label htmlFor="idMedico">ID Médico Seleccionado (Temporal):</label>
-                    <input
-                        type="text"
-                        name="idMedico"
-                        // Asignamos el valor directamente al estado para el ejemplo
-                        value={datosTurno.idMedico} 
-                        onChange={manejarCambio} 
-                        required
-                    />
-                </div>
-                
-                {/* Campo Fecha */}
-                <div className="form-grupo">
-                    <label htmlFor="fecha">Fecha:</label>
-                    <input
-                        type="date"
-                        name="fecha"
-                        value={datosTurno.fecha}
-                        onChange={manejarCambio}
-                        required
-                    />
-                </div>
+        <div className="formulario-turno-container">
+            <form onSubmit={enviarTurno}> 
+                <div className="formulario-turno"> 
+                    <h2>Agendar Nuevo Turno</h2>
+                    
+                    {/* 🎯 MUESTRA EL MÉDICO SELECCIONADO */}
+                    <p className="medico-seleccionado-info">
+                        Reservando con: <strong>{medicoInfo.nombre}</strong> de {medicoInfo.especialidad}
+                    </p>
+                    
+                    {/* Campo Fecha */}
+                    <div className="form-grupo">
+                        <label htmlFor="fecha">Fecha:</label>
+                        <input
+                            type="date"
+                            name="fecha"
+                            value={datosTurno.fecha}
+                            onChange={manejarCambio}
+                            required
+                        />
+                    </div>
 
-                {/* Campo Hora */}
-                <div className="form-grupo">
-                    <label htmlFor="hora">Hora:</label>
-                    <input
-                        type="time"
-                        name="hora"
-                        value={datosTurno.hora}
-                        onChange={manejarCambio}
-                        required
-                    />
-                </div>
-                
-                {/* Campo Motivo */}
-                <div className="form-grupo">
-                    <label htmlFor="motivo">Motivo de la consulta:</label>
-                    <textarea
-                        name="motivo"
-                        value={datosTurno.motivo}
-                        onChange={manejarCambio}
-                        required
-                    ></textarea>
-                </div>
+                    {/* Campo Hora */}
+                    <div className="form-grupo">
+                        <label htmlFor="hora">Hora:</label>
+                        <input
+                            type="time"
+                            name="hora"
+                            value={datosTurno.hora}
+                            onChange={manejarCambio}
+                            required
+                        />
+                    </div>
+                    
+                    {/* Campo Motivo */}
+                    <div className="form-grupo">
+                        <label htmlFor="motivo">Motivo de la consulta:</label>
+                        <textarea
+                            name="motivo"
+                            value={datosTurno.motivo}
+                            onChange={manejarCambio}
+                            required
+                        ></textarea>
+                    </div>
 
-                {/* Botón para enviar la solicitud al servidor */}
-                <button type="submit" className="btn-confirmar">Confirmar Turno</button>
-            
-                {/* Muestra el mensaje con una clase CSS condicional (éxito/error) */}
-                {mensaje && <p className={`mensaje-feedback ${esExito ? 'exito' : 'error'}`}>{mensaje}</p>}
-            </div>
-        </form>
+                    <button type="submit" className="btn-confirmar">Confirmar Turno</button>
+                
+                    {mensaje && <p className={`mensaje-feedback ${esExito ? 'exito' : 'error'}`}>{mensaje}</p>}
+                </div>
+            </form>
+        </div>
     );
 };
 

@@ -1,4 +1,6 @@
 // src/pages/ListadoTurnos.jsx
+// * ver turno asignados *
+
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext"; // 🔑 Para obtener el usuario logueado
 import { obtenerTurnosAPI } from "../services/apiServices"; // 🔑 El puente de comunicación

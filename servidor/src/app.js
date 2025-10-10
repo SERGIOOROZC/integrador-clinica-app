@@ -9,7 +9,6 @@ import usuarioRoutes from './routes/usuario.routes.js';
 import pacienteRoutes from './routes/paciente.routes.js';
 import medicoRoutes from './routes/medico.routes.js';
 import turnoRoutes from './routes/turno.routes.js';
-import loginRoutes from './routes/login.routes.js';
 import cors from "cors";
 
 
@@ -32,7 +31,7 @@ app.use('/usuario', usuarioRoutes);
 app.use('/paciente', pacienteRoutes);
 app.use('/medico', medicoRoutes);
 app.use('/turno', turnoRoutes);
-app.use('/login', loginRoutes); // La ruta sería: POST /login
+
 
 
 app.use(function(req, res) {
