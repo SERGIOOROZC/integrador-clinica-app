@@ -2,38 +2,69 @@
 
 import db from "../config/db.js";
 
-// 🔹 CREAR PACIENTE (Registro Inicial Mínimo)
-// Esta función está corregida para solo insertar id_usuario y edad,
-// asumiendo que DNI y Teléfono se completan en una ruta posterior (Completar Perfil).
-export const crearPaciente = async (paciente) => {
-    // Solo desestructuramos las propiedades que el controlador nos está enviando
-    const { id_usuario, edad } = paciente; 
-    
+/**
+ * Crear un paciente.
+ * id_responsable y direccion son opcionales, por defecto null
+ */
+export const crearPaciente = async ({
+    id_usuario,
+    dni,
+    telefono,
+    edad,
+    id_responsable = null,
+    direccion = null
+}) => {
     const [result] = await db.query(
-        // 🔑 Consulta SQL simplificada para evitar el error de campos NOT NULL (DNI, Teléfono)
-        "INSERT INTO paciente (id_usuario, edad) VALUES (?, ?)",
-        [id_usuario, edad]
+        `INSERT INTO paciente 
+          (id_usuario, dni, telefono, edad, id_responsable, direccion)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        // 🚨 CORRECCIÓN CRÍTICA: Se pasan las variables directamente.
+        // Esto evita que '0' (falsy) se convierta en 'null'.
+        [id_usuario, dni, telefono, edad, id_responsable, direccion] 
     );
-    
-    return { id_paciente: result.insertId, id_usuario, edad };
+
+    return {
+        id_paciente: result.insertId,
+        id_usuario,
+        dni,
+        telefono,
+        edad,
+        id_responsable,
+        direccion
+    };
 };
 
-// 🔹 OBTENER TURNOS DEL PACIENTE
-export const obtenerTurnosPaciente = async (id_paciente) => {
-    // Puedes mejorar esta consulta para incluir nombre del médico y especialidad
-    const [rows] = await db.query(
-        "SELECT * FROM turno WHERE id_paciente = ?",
-        [id_paciente]
+/**
+ * Actualizar paciente existente
+ */
+export const actualizarPaciente = async ({
+    id_paciente,
+    dni,
+    telefono,
+    edad,
+    id_responsable = null,
+    direccion = null
+}) => {
+    await db.query(
+        `UPDATE paciente 
+            SET dni = ?, telefono = ?, edad = ?, id_responsable = ?, direccion = ?
+          WHERE id_paciente = ?`,
+        // Se pasan las variables directamente para la actualización también
+        [dni, telefono, edad, id_responsable, direccion, id_paciente] 
     );
-    return rows;
+
+    return { id_paciente, dni, telefono, edad, id_responsable, direccion };
 };
 
-// 🔹 OBTENER PACIENTE POR ID DE USUARIO (Necesario para el flujo de Completar Perfil)
-export const obtenerPacientePorIdUsuario = async (id_usuario) => {
-    // Esto es útil para saber si el perfil ya existe
+/**
+ * Obtener paciente por id_usuario
+ */
+export const obtenerPacientePorUsuario = async (id_usuario) => {
     const [rows] = await db.query(
-        "SELECT id_paciente, edad, dni, telefono, direccion FROM paciente WHERE id_usuario = ?",
+        `SELECT id_paciente, id_usuario, dni, telefono, edad, id_responsable, direccion
+          FROM paciente
+          WHERE id_usuario = ?`,
         [id_usuario]
     );
-    return rows[0]; // Devuelve el primer resultado (el perfil del paciente)
-}
+    return rows[0] || null;
+};

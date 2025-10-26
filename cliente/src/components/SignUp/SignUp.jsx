@@ -6,17 +6,16 @@ import { registrarUsuarioAPI } from "../../services/apiServices.js";
 import { useAuth } from "../../context/AuthContext";
 import "./SignUp.css";
 
-
 function SignUp() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // 🔹 Contexto para guardar usuario y token
+  const { login } = useAuth(); // Contexto para guardar usuario y token
 
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
     email: "",
     password: "",
-    rol: "paciente", // por defecto
+    rol: "paciente", // Rol fijo, no se modifica
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,24 +32,20 @@ function SignUp() {
     try {
       const body = await registrarUsuarioAPI(formData);
 
-      // 🔹 Guardamos usuario y token en contexto
+      // Guardamos token y usuario en contexto
       login(body.token, body.usuario);
 
       toast.success("Registro exitoso");
 
-      // 🔹 Redirigir según rol
-      switch (body.usuario.rol) {
-        case "admin":
-          navigate("/admin");
-          break;
-        case "medico":
-          navigate("/medico");
-          break;
-        case "paciente":
-          navigate("/completar-perfil"); // o ruta que corresponda
-          break;
-        default:
-          navigate("/");
+      // Redirigir paciente nuevo a CompletarPerfil
+      if (body.usuario.rol === "paciente") {
+        navigate("/completar-perfil");
+      } else if (body.usuario.rol === "admin") {
+        navigate("/admin");
+      } else if (body.usuario.rol === "medico") {
+        navigate("/medico");
+      } else {
+        navigate("/");
       }
 
     } catch (error) {
@@ -97,11 +92,6 @@ function SignUp() {
           onChange={handleChange}
           required
         />
-        <select name="rol" value={formData.rol} onChange={handleChange}>
-          <option value="paciente">Paciente</option>
-          <option value="medico">Médico</option>
-          <option value="admin">Admin</option>
-        </select>
         <button type="submit" disabled={loading}>
           {loading ? "Registrando..." : "Registrarse"}
         </button>

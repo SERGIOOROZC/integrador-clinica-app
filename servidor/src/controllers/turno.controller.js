@@ -100,13 +100,14 @@ export const borrarTurno = async (req, res) => {
    🔹 Actualizar turno (solo campos permitidos)
 ========================================================= */
 export const actualizarTurno = async (req, res) => {
-    console.log(`[TurnoController] 💡 Solicitud PUT para ID: ${req.params.id}`);
+    console.log(`[TurnoController] 💡 PUT /turnos/${req.params.id}`);
 
     try {
         const { id } = req.params;
         const datosActualizados = req.body;
 
-        
+        // 🧩 Validación mínima (opcional)
+        if (!id) return res.status(400).json({ error: "Falta el ID del turno." });
 
         // 2️⃣ Actualizar turno en base de datos
         const turnoActualizado = await actualizarTurnoModel(id, datosActualizados);
@@ -115,7 +116,7 @@ export const actualizarTurno = async (req, res) => {
     } catch (error) {
         console.error("Error al actualizar el turno:", error);
 
-        if (error.message.includes("NoEncontrado")) {
+        if (error.message?.includes("NoEncontrado")) {
             return res.status(404).json({ error: "Turno no encontrado." });
         }
 

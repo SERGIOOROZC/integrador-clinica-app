@@ -1,15 +1,15 @@
+// src/components/CompletarPerfil/CompletarPerfil.jsx
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from 'react-toastify'; 
-import "./CompletarPerfil.css"; 
+import { toast } from "react-toastify";
+import "./CompletarPerfil.css";
 
 const API_BASE_URL = "http://localhost:3000";
 
 const CompletarPerfil = () => {
-    // Asumiendo que useAuth() también proporciona el estado de carga, 
-    // pero si no, verificamos el user
-    const { user, logout } = useAuth(); 
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     const [datosPerfil, setDatosPerfil] = useState({
@@ -17,33 +17,20 @@ const CompletarPerfil = () => {
         telefono: "",
         edad: "",
     });
+
     const [loading, setLoading] = useState(false);
 
     // -----------------------------------------------------------
-    // 1. Manejo de Redirección y Sesión
+    // Redirección si no hay usuario logueado
     // -----------------------------------------------------------
     useEffect(() => {
-        // 🔑 CAMBIO CRÍTICO: Si el usuario NO existe, lo mandamos a login.
-        // Esto captura la lógica de tu error "Token de usuario no encontrado".
         if (!user) {
-            // No usamos toast.error aquí para evitar duplicar el mensaje 
-            // que ya da el AuthContext si es el que navega.
-            navigate('/login'); 
-            return;
+            navigate("/login");
         }
-
-        // Si ya hay datos, redirigimos (Si decides usar esta lógica)
-        /*
-        if (user.dni && user.telefono && user.edad) {
-             toast.info("Tu perfil ya está completo. Continuamos.");
-             navigate('/reservar');
-        }
-        */
     }, [user, navigate]);
 
-
     // -----------------------------------------------------------
-    // 2. Manejo de cambios en el formulario
+    // Manejo de cambios en el formulario
     // -----------------------------------------------------------
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -51,53 +38,52 @@ const CompletarPerfil = () => {
     };
 
     // -----------------------------------------------------------
-    // 3. Manejo del envío del formulario
+    // Manejo del envío del formulario
     // -----------------------------------------------------------
     const handleCompletarPerfil = async (e) => {
         e.preventDefault();
-        
-        // 🛑 PRE-VERIFICACIÓN DE SESIÓN (para evitar errores en la lógica)
-        const idUsuario = user?.id_usuario; 
+        setLoading(true);
+
+        const idUsuario = user?.id_usuario;
 
         if (!idUsuario) {
-            toast.error("Error de sesión: ID de usuario no encontrado. Intentando reconectar...");
+            toast.error("Error de sesión: ID de usuario no encontrado.");
             setLoading(false);
             return;
         }
-        
-        setLoading(true);
 
-        // Verificación de campos requeridos (CORREGIDA)
-        if (datosPerfil.dni.trim() === "" || 
-            datosPerfil.telefono.trim() === "" || 
-            datosPerfil.edad === "" 
-        ) {
+        if (!datosPerfil.dni.trim() || !datosPerfil.telefono.trim() || !datosPerfil.edad) {
             toast.error("Por favor, completa todos los campos requeridos.");
             setLoading(false);
             return;
         }
-        
-        // Objeto a enviar al Back-end
+
+        // Se mantiene la estructura de datosAEnviar, pero ya no la usamos para POST, 
+        // solo para el cuerpo del PUT. Se elimina 'id_usuario' del body.
         const datosAEnviar = {
-            id_usuario: idUsuario, 
             dni: datosPerfil.dni,
             telefono: datosPerfil.telefono,
             edad: datosPerfil.edad,
-            nombre: user?.nombre || '', 
-            apellido: user?.apellido || '', 
+            id_responsable: null, // valor por defecto (se mantienen)
+            direccion: null,      // valor por defecto (se mantienen)
         };
-        
-        try {
-            // Petición al endpoint POST /paciente
-            // 🔑 CAMBIO: Asegúrate de enviar el token JWT si la ruta /paciente lo requiere
-            // (Tu código Front-end no está enviando el token en esta petición fetch)
-            const token = localStorage.getItem('token'); 
 
-            const res = await fetch(`${API_BASE_URL}/paciente`, {
-                method: "POST",
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                toast.error("Token no encontrado, inicia sesión nuevamente.");
+                setLoading(false);
+                return;
+            }
+
+            // 🚨 CORRECCIÓN CRÍTICA 🚨
+            // 1. Cambiar el método de POST a PUT.
+            // 2. Agregar el ID del usuario a la URL para que el BackEnd sepa qué perfil actualizar.
+            const res = await fetch(`${API_BASE_URL}/paciente/${idUsuario}`, {
+                method: "PUT", // 👈 CAMBIO CLAVE: Actualización (Update)
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`, // ⬅️ ¡Añadido el Token!
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(datosAEnviar),
             });
@@ -105,17 +91,16 @@ const CompletarPerfil = () => {
             const responseData = await res.json();
 
             if (!res.ok) {
-                console.error("Error al guardar perfil (Backend Response):", responseData);
-                toast.error(`Error: ${responseData.error || 'No se pudo guardar el perfil.'}`);
+                console.error("Error backend:", responseData);
+                toast.error(responseData.error || "No se pudo guardar el perfil.");
                 return;
             }
 
-            // 🟢 ÉXITO: Redirección
-            toast.success(responseData.mensaje || "✅ Perfil completado con éxito. ¡A reservar!");
-            navigate('/reservar'); 
+            toast.success(responseData.mensaje || "Perfil completado con éxito.");
+            navigate("/reservar"); // Redirige al flujo siguiente (reserva de turno)
 
         } catch (error) {
-            console.error("Error de red/servidor al enviar el formulario:", error);
+            console.error("Error de conexión:", error);
             toast.error("Hubo un error de conexión con el servidor.");
         } finally {
             setLoading(false);
@@ -123,14 +108,26 @@ const CompletarPerfil = () => {
     };
 
     // -----------------------------------------------------------
-    // 4. Renderizado (JSX)
+    // Renderizado (se mantiene)
     // -----------------------------------------------------------
-    // 🔑 Renderizado condicional: Muestra un loader si user es null
     if (!user) {
         return (
             <div className="completar-perfil-container">
                 <h2>Cargando sesión...</h2>
-                <p>Si esto tarda, por favor, ve a <a href="/login" onClick={logout}>Login</a>.</p>
+                <p>
+                    Si esto tarda, ve a{" "}
+                    <a
+                        href="/login"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            logout();
+                            navigate("/login");
+                        }}
+                    >
+                        Login
+                    </a>
+                    .
+                </p>
             </div>
         );
     }
@@ -140,7 +137,6 @@ const CompletarPerfil = () => {
             <h2>Completar Perfil de Paciente</h2>
             <p>Datos de la cuenta: {user.nombre} {user.apellido}</p>
             <form onSubmit={handleCompletarPerfil}>
-                
                 {/* DNI */}
                 <label htmlFor="dni">DNI</label>
                 <input
@@ -152,7 +148,7 @@ const CompletarPerfil = () => {
                     placeholder="Número de identificación"
                     required
                 />
-                
+
                 {/* Teléfono */}
                 <label htmlFor="telefono">Teléfono</label>
                 <input
@@ -164,7 +160,7 @@ const CompletarPerfil = () => {
                     placeholder="Ej: 3415550000"
                     required
                 />
-                
+
                 {/* Edad */}
                 <label htmlFor="edad">Edad</label>
                 <input
@@ -175,7 +171,7 @@ const CompletarPerfil = () => {
                     onChange={handleChange}
                     placeholder="Tu edad en años"
                     required
-                    min="1" 
+                    min="1"
                 />
 
                 <button type="submit" disabled={loading}>

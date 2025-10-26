@@ -1,61 +1,108 @@
-// src/controllers/paciente.controller.js
+// src/controllers/paciente.controller.js (VERSIÓN CORREGIDA Y LIMPIA)
+
 import db from "../config/db.js";
+import { crearPaciente, actualizarPaciente, obtenerPacientePorUsuario } from "../models/paciente.models.js";
 
 /**
- * Crea o actualiza el registro de paciente en la tabla 'paciente'.
- * Es llamado después de un login exitoso de un paciente o después del registro.
+ * Actualiza el registro de paciente.
+ * Está función ahora es llamada por la ruta PUT /paciente/:id.
  */
 export const crearOActualizarPaciente = async (req, res) => {
     try {
-        // Obtenemos SOLO los campos necesarios para la tabla PACIENTE
-        // Aunque recibamos 'nombre' y 'apellido', no los usamos en esta consulta, 
-        // ya que la tabla paciente solo requiere la clave foránea y los datos del perfil.
-        const { id_usuario, dni, telefono, edad } = req.body;
+        // 🚨 CAMBIO CLAVE: Obtener el ID del usuario desde los parámetros de la URL
+        const id_usuario = req.params.id; 
+        const { dni, telefono, edad } = req.body;
 
-        // 1. Verificación de campos obligatorios
         if (!id_usuario || !dni || !telefono || !edad) {
-            return res.status(400).json({ 
-                error: "Faltan datos obligatorios para crear el perfil de paciente (ID de usuario, DNI, Teléfono o Edad)." 
+            return res.status(400).json({
+                error: "Faltan datos obligatorios para actualizar el perfil (ID usuario, DNI, teléfono o edad)."
             });
         }
 
-        // 2. Verificamos si ya existe paciente con este id_usuario
-        const [rows] = await db.query(
-            "SELECT id_paciente FROM paciente WHERE id_usuario = ?",
-            [id_usuario]
-        );
+        // 1. Buscar el perfil existente.
+        const existing = await obtenerPacientePorUsuario(id_usuario);
 
-        if (rows.length > 0) {
-            // 3. Si el registro existe, lo actualizamos (UPDATE)
-            await db.query(
-                "UPDATE paciente SET dni = ?, telefono = ?, edad = ? WHERE id_usuario = ?",
-                [dni, telefono, edad, id_usuario]
-            );
-        } else {
-            // 4. Si el registro NO existe, lo creamos (INSERT)
-            await db.query(
-                "INSERT INTO paciente (id_usuario, dni, telefono, edad) VALUES (?, ?, ?, ?)",
-                [id_usuario, dni, telefono, edad]
-            );
+        if (existing) {
+            // 2. ACTUALIZAR (Este es el flujo normal después del registro inicial)
+            const actualizado = await actualizarPaciente({
+                id_paciente: existing.id_paciente, // Usamos la PK de la tabla paciente
+                dni,
+                telefono,
+                edad,
+                id_responsable: null,
+                direccion: null
+            });
+            return res.status(200).json({
+                mensaje: "✅ Perfil actualizado con éxito",
+                paciente: actualizado
+            });
         }
 
-        // 5. Respuesta exitosa
-        res.status(200).json({ 
-            mensaje: "✅ Perfil completado con éxito. ¡Continuá a la reserva!",
+        // 3. CREAR (Este bloque SOLO se ejecutaría si la fila se borró o el registro inicial falló)
+        // Ya no debería ejecutarse si el registro de usuario funciona correctamente.
+        const nuevo = await crearPaciente({
             id_usuario,
-            dni, 
-            telefono, 
-            edad 
+            dni,
+            telefono,
+            edad,
+            id_responsable: null,
+            direccion: null
         });
-        
+
+        res.status(201).json({
+            mensaje: "✅ Perfil completado con éxito. ¡Continuá a la reserva!",
+            paciente: nuevo
+        });
+
     } catch (error) {
-        console.error("Error SQL al crear/actualizar paciente:", error); 
-        res.status(500).json({ error: "Error interno del servidor al completar perfil." });
+        console.error("Error en crearOActualizarPaciente:", error);
+        res.status(500).json({ error: "Error interno al actualizar paciente." });
+    }
+};
+
+// ... (El resto de las funciones se mantiene igual) ...
+
+// 🔹 NUEVA FUNCIÓN: Verificar si el perfil está completo
+export const verificarPerfilCompleto = async (req, res) => {
+    try {
+        const id_usuario_logueado = req.usuario.id; 
+
+        const paciente = await obtenerPacientePorUsuario(id_usuario_logueado);
+        
+        // Asumimos que si la fila de paciente existe Y el DNI no es '0' o null, está completo.
+        // Esto es más robusto que solo verificar la existencia de la fila.
+        const perfilCompleto = paciente && paciente.dni !== '0' && paciente.dni !== null;
+
+        res.status(200).json({ 
+            perfilCompleto: perfilCompleto,
+            mensaje: perfilCompleto ? "Perfil completo" : "Perfil incompleto, requiere finalización."
+        });
+
+    } catch (error) {
+        console.error("Error en verificarPerfilCompleto:", error);
+        res.status(500).json({ error: "Error interno al verificar perfil del paciente." });
     }
 };
 
 /**
- * Obtener turnos de un paciente por su id
+ * Obtener paciente por id_usuario
+ */
+export const verPacientePorUsuario = async (req, res) => {
+    try {
+        const { id_usuario } = req.params;
+        const paciente = await obtenerPacientePorUsuario(id_usuario);
+
+        if (!paciente) return res.status(404).json({ error: "Paciente no encontrado." });
+
+        res.json(paciente);
+    } catch (error) {
+        console.error("Error en verPacientePorUsuario:", error);
+        res.status(500).json({ error: "Error al obtener datos del paciente." });
+    }
+};
+
+/**
+ * Obtener turnos de un paciente por id
  */
 export const verTurnosPaciente = async (req, res) => {
     try {
@@ -67,19 +114,28 @@ export const verTurnosPaciente = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error("Error en verTurnosPaciente:", error);
-        res.status(500).json({ error: "Error al obtener turnos del paciente" });
+        res.status(500).json({ error: "Error al obtener turnos del paciente." });
     }
 };
 
 /**
- * Nuevo: Controlador para Agendar/Reservar Turno (Implementación de ejemplo)
- * Nota: Debes asegurar que esta función está completa en tu código.
+ * Agendar/Reservar Turno
  */
 export const reservarTurno = async (req, res) => {
-    // Código de la función reservarTurno...
-    // Ejemplo simple:
-    // const { id_paciente, id_medico, fecha, hora } = req.body;
-    // await db.query("INSERT INTO turno (...) VALUES (...)");
-    
-    res.status(201).json({ mensaje: "✅ Turno agendado con éxito." });
+    try {
+        const { id_paciente, id_medico, fecha, hora } = req.body;
+        if (!id_paciente || !id_medico || !fecha || !hora) {
+            return res.status(400).json({ error: "Faltan datos para reservar el turno." });
+        }
+
+        await db.query(
+            `INSERT INTO turno (id_paciente, id_medico, fecha, hora) VALUES (?, ?, ?, ?)`,
+            [id_paciente, id_medico, fecha, hora]
+        );
+
+        res.status(201).json({ mensaje: "✅ Turno agendado con éxito." });
+    } catch (error) {
+        console.error("Error en reservarTurno:", error);
+        res.status(500).json({ error: "Error al reservar turno." });
+    }
 };
