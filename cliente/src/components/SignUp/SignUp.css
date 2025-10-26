@@ -1,6 +1,6 @@
 /* Fondo general */
 body {
-  background: #0f172a;
+  background: #0f172a; /* fondo dark */
   font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
@@ -8,13 +8,15 @@ body {
 
 /* Contenedor centrado */
 .signup-container {
-  max-width: 480px;
-  margin: 60px auto;
+  position: relative;
+  max-width: 420px;
+  margin: 80px auto;
   padding: 40px;
-  background: rgba(17, 24, 39, 0.85);
+  background: rgba(17, 24, 39, 0.85); /* gris oscuro translúcido */
   border-radius: 16px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
   text-align: center;
+  color: #e2e8f0;
 }
 
 /* Título */
@@ -26,13 +28,15 @@ body {
 }
 
 /* Formulario */
-.signup-form {
+.signup-container form {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.signup-form input {
+/* Inputs y select */
+.signup-container input,
+.signup-container select {
   width: 100%;
   padding: 14px;
   border-radius: 10px;
@@ -41,15 +45,17 @@ body {
   color: #fff;
   font-size: 0.95rem;
   outline: none;
-  transition: border 0.2s ease;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-.signup-form input:focus {
+.signup-container input:focus,
+.signup-container select:focus {
   border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
 }
 
-/* Botón morado */
-.signup-form button {
+/* Botón principal */
+.signup-container button {
   width: 100%;
   padding: 14px;
   background: linear-gradient(90deg, #6366f1, #8b5cf6);
@@ -59,60 +65,45 @@ body {
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.2s ease;
 }
 
-.signup-form button:hover {
+.signup-container button:hover {
   opacity: 0.9;
+  transform: translateY(-2px);
 }
 
-/* Línea divisoria */
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 20px 0;
-  color: #94a3b8;
-  font-size: 0.85rem;
+.signup-container button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #334155;
-  margin: 0 10px;
+/* Mensajes de toast (opcional, si los usas) */
+.toast-success {
+  background-color: #22c55e !important;
+  color: #fff !important;
 }
 
-/* Botón Google */
-.google-btn {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  background: #1e293b;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.3s;
+.toast-error {
+  background-color: #ef4444 !important;
+  color: #fff !important;
 }
 
-.google-btn:hover {
-  background: #334155;
-}
-
-/* Link abajo */
-.signin-link {
-  margin-top: 15px;
+/* Link debajo del formulario */
+.signup-container .login-link {
+  margin-top: 20px;
   font-size: 0.9rem;
   color: #94a3b8;
 }
 
-.signin-link a {
+.signup-container .login-link span {
   color: #6366f1;
   font-weight: 500;
-  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
-.signin-link a:hover {
+.signup-container .login-link span:hover {
+  color: #8b5cf6;
   text-decoration: underline;
 }

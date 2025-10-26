@@ -1,80 +1,153 @@
-// src/controllers/turno.controller.js
+import db from "../config/db.js"; // 🚨 Importación Crítica para la búsqueda de ID
+import { 
+    obtenerTurnos, 
+    crearTurno, 
+    eliminarTurno, 
+    actualizarTurno as actualizarTurnoModel, 
+    verificarDisponibilidad 
+} from "../models/turno.models.js";
 
-// 🔹 Importamos funciones del modelo (renombramos actualizarTurno para evitar conflicto)
-import { obtenerTurnos, crearTurno, eliminarTurno, actualizarTurno as actualizarTurnoModel } from "../models/turno.models.js";
+
+// =========================================================
+// 🔑 FUNCIÓN DE UTILIDAD: TRADUCCIÓN DE ID
+// =========================================================
+
+/**
+ * Busca el ID primario de la tabla 'paciente' usando el ID de usuario (FK).
+ * @param {number} idUsuario - El ID del usuario logueado (desde el token).
+ * @returns {Promise<number|null>} El id_paciente o null si no existe.
+ */
+const obtenerIdPacientePorUsuarioId = async (idUsuario) => {
+    const [rows] = await db.query(
+        "SELECT id_paciente FROM paciente WHERE id_usuario = ?",
+        [idUsuario]
+    );
+    return rows.length > 0 ? rows[0].id_paciente : null;
+};
 
 
-
-// B. router pide GET/turno y el controller hace la función obtenerTurnos() que se conecta a BD
-// con SQL hace la sentencia SELECT y devuelve los datos
-
-// C. en listarTurnos: Objetivo
-//    - Admin ve todos los turnos
-//    - Médico ve solo los turnos asignados a él
-//    - Paciente ve solo sus turnos
+// =========================================================
+// 🔹 Listar turnos: Maneja el filtro por rol
+// =========================================================
 export const listarTurnos = async (req, res) => {
-  try {
-    const { id, rol } = req.user;
+    try {
+        const idMedicoFiltro = req.query.id_medico; 
+        
+        // Asumimos que el middleware JWT decodifica a { id_usuario, rol }
+        const { id_usuario, rol } = req.user; 
+        let filtros = {};
+        
+        // 1. Caso Calendario: Mostrar disponibilidad de un médico
+        if (idMedicoFiltro) {
+            filtros.id_medico = idMedicoFiltro; 
+        
+        // 2. Caso Historial: Médico
+        } else if (rol === "medico") {
+            filtros.id_medico = id_usuario; 
+        
+        // 3. Caso Historial: Paciente
+        } else if (rol === "paciente") {
+            const idPacienteReal = await obtenerIdPacientePorUsuarioId(id_usuario);
+            if (!idPacienteReal) {
+                return res.status(400).json({ error: "Perfil de paciente incompleto o no encontrado." });
+            }
+            filtros.id_paciente = idPacienteReal;
+        } 
+        
+        // 4. Caso Admin: sin filtros
+        const turnos = await obtenerTurnos(filtros);
+        
+        res.json(turnos);
 
-    let turnos;
-
-    if (rol === "admin") {
-      // Admin ve todos los turnos
-      turnos = await obtenerTurnos();
-    } else if (rol === "medico") {
-      // Médico ve solo sus turnos
-      turnos = await obtenerTurnos({ id_medico: id });
-    } else if (rol === "paciente") {
-      // Paciente ve solo sus turnos
-      turnos = await obtenerTurnos({ id_paciente: id });
-    } else {
-      return res.status(403).json({ error: "Rol no autorizado" });
+    } catch (error) {
+        console.error("Error al listar turnos:", error);
+        res.status(500).json({ error: "Error interno al listar turnos." });
     }
-
-    res.json(turnos);
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 };
 
-// 🔹 Crear un nuevo turno
+
+// =========================================================
+// 🔹 Crear un nuevo turno (SEGURO contra suplantación y garantiza 'estado')
+// =========================================================
 export const nuevoTurno = async (req, res) => {
-  try {
-    const turno = await crearTurno(req.body);
-    res.status(201).json(turno);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const { id_medico, fecha, hora, motivo } = req.body; 
+    const idUsuarioLogueado = req.user.id_usuario; 
+
+    try {
+        // 1. SEGURIDAD: Obtener el ID_PACIENTE real (el PK)
+        const id_paciente_real = await obtenerIdPacientePorUsuarioId(idUsuarioLogueado);
+        if (!id_paciente_real) {
+            return res.status(400).json({ error: "Perfil de paciente incompleto o no encontrado." });
+        }
+
+        // 2. VERIFICACIÓN DE DISPONIBILIDAD
+        const estaOcupado = await verificarDisponibilidad(id_medico, fecha, hora); 
+        if (estaOcupado) {
+            return res.status(409).json({ 
+                error: "El horario seleccionado ya está reservado. Por favor, elige otro." 
+            });
+        }
+
+        // 3. Si está libre, procede con la inserción
+        const turnoData = {
+            id_paciente: id_paciente_real, 
+            id_medico,
+            fecha,
+            hora,
+            motivo, // Se mapea en el modelo a 'observaciones'
+            estado: 'Pendiente' // ⬅️ Estado inicial forzado
+        };
+
+        const nuevo = await crearTurno(turnoData);
+        
+        res.status(201).json({
+            mensaje: "Turno reservado exitosamente",
+            turno: nuevo 
+        });
+        
+    } catch (error) {
+        console.error("Error al crear turno:", error);
+        res.status(500).json({ error: "Error interno del servidor al crear turno." });
+    }
 };
 
+
+// =========================================================
 // 🔹 Borrar un turno por ID
+// =========================================================
 export const borrarTurno = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const resultado = await eliminarTurno(id);
-    res.json(resultado);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const { id } = req.params;
+        const resultado = await eliminarTurno(id);
+
+        res.json({
+            mensaje: "Turno eliminado correctamente",
+            resultado
+        });
+    } catch (error) {
+        console.error("Error al borrar turno:", error);
+        res.status(500).json({ error: "Error interno al borrar el turno." });
+    }
 };
 
+
+// =========================================================
 // 🔹 Actualizar un turno por ID
+// =========================================================
 export const actualizarTurno = async (req, res) => {
-  try {
-    const { id } = req.params; // 👈 Obtengo el ID del turno a actualizar desde la URL
-    const datosActualizados = req.body; // 👈 Obtengo los nuevos datos del cuerpo de la solicitud
+    try {
+        const { id } = req.params; 
+        const datosActualizados = req.body; 
 
-    // 1. Llama al Model para ejecutar la sentencia SQL de actualización
-    const turnoActualizado = await actualizarTurnoModel(id, datosActualizados);
+        const turnoActualizado = await actualizarTurnoModel(id, datosActualizados);
 
-    res.json({
-      mensaje: "Turno actualizado exitosamente",
-      turno: turnoActualizado
-    });
+        res.json({
+            mensaje: "Turno actualizado exitosamente",
+            turno: turnoActualizado
+        });
 
-  } catch (error) {
-    console.error('Error al actualizar el turno:', error);
-    res.status(500).json({ error: error.message });
-  }
+    } catch (error) {
+        console.error("Error al actualizar el turno:", error);
+        res.status(500).json({ error: "Error interno al actualizar el turno." });
+    }
 };

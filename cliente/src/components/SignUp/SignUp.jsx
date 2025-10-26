@@ -1,84 +1,70 @@
+// src/components/SignUp/SignUp.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { registrarUsuarioAPI } from "../../services/apiServices.js";
+import { useAuth } from "../../context/AuthContext";
 import "./SignUp.css";
 
-function SignUp({ user }) { // 👈 agregamos user como prop para saber si es admin
-  // ESTADO *se crea el objeto con los datos que ingresa usuario y se guarda en formData
+
+function SignUp() {
+  const navigate = useNavigate();
+  const { login } = useAuth(); // 🔹 Contexto para guardar usuario y token
+
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
     email: "",
     password: "",
+    rol: "paciente", // por defecto
   });
 
-  // FUNCION * Maneja los cambios en los inputs.va actualizando los inputs cuando el usuario scribe.
-  // setFormData() actualiza el estado ,copia formData y reemplaza solo el campo que cambió.
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
-    // e.target.name → el nombre del input
-    // e.target.value → el valor que escribe el usuario
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  // FUNCION * Maneja el envío del formulario , VA HACER UNA PETICION http POST al backend
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Evita que la página se recargue por defecto /html/.
-
-    // 💡 MODIFICACION CLAVE: Añadir el rol por defecto si no es un registro de médico
-    let datosAEnviar = { ...formData }; 
-
-    // Si NO hay campos de médico, asumimos que es un registro de usuario normal
-    // y establecemos el rol a "usuario".
-    if (!datosAEnviar.nombreMedico) {
-      datosAEnviar.rol = "paciente"; 
-    }
-    // Si un admin está registrando un médico, el backend debe manejar la lógica
-    // de asignación de rol "medico" y usar los campos nombreMedico/apellidoMedico.
-    
-    console.log("Datos enviados:", datosAEnviar); // Ahora se incluye el rol
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      // Llamada al backend usando fetch con post porque enviamos datos el objeto datosAEnviar
-      const response = await fetch("http://localhost:3000/usuario", {
-        method: "POST", // tipo de petición
-        headers: {
-          "Content-Type": "application/json", // le decimos al servidor que enviamos JSON
-        },
-        body: JSON.stringify(datosAEnviar), // convertimos el objeto final a JSON
-      });
+      const body = await registrarUsuarioAPI(formData);
 
-      // Respuesta del servidor ,convertimos la respuesta a JSON
-      const data = await response.json();
+      // 🔹 Guardamos usuario y token en contexto
+      login(body.token, body.usuario);
 
-      // Si la respuesta fue exitosa
-      if (response.ok) {
-        alert("✅ Registro exitoso");
-        console.log("Respuesta del servidor:", data);
-        
-        // Opcional: limpiar el formulario después del éxito
-        setFormData({
-            nombre: "",
-            apellido: "",
-            email: "",
-            password: "",
-        });
+      toast.success("Registro exitoso");
 
-      } else {
-        alert("❌ Error en el registro");
-        console.error("Errores:", data);
+      // 🔹 Redirigir según rol
+      switch (body.usuario.rol) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "medico":
+          navigate("/medico");
+          break;
+        case "paciente":
+          navigate("/completar-perfil"); // o ruta que corresponda
+          break;
+        default:
+          navigate("/");
       }
+
     } catch (error) {
-      console.error("Error en la conexión:", error);
-      alert("⚠️ No se pudo conectar con el servidor");
+      console.error(error);
+      toast.error(error.message || "Error en registro");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="signup-container">
-      <h2>Crear Una Cuenta</h2>
-      {/* Cuando el usuario aprieta “Registro”, se ejecuta la función handleSubmit.enviamos el formulario */}
-      <form onSubmit={handleSubmit} className="signup-form">
+      <h2>Registro de Usuario</h2>
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
           name="nombre"
@@ -87,7 +73,6 @@ function SignUp({ user }) { // 👈 agregamos user como prop para saber si es ad
           onChange={handleChange}
           required
         />
-
         <input
           type="text"
           name="apellido"
@@ -96,72 +81,31 @@ function SignUp({ user }) { // 👈 agregamos user como prop para saber si es ad
           onChange={handleChange}
           required
         />
-
-        
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="Correo electrónico"
           value={formData.email}
           onChange={handleChange}
           required
         />
-
         <input
           type="password"
           name="password"
-          placeholder="Password (hasta 10 caracteres)"
+          placeholder="Contraseña"
           value={formData.password}
           onChange={handleChange}
           required
-          minLength={6}
         />
-
-        {/* 👉 BLOQUE CONDICIONAL: estos campos solo aparecen si el usuario logueado es admin */}
-        {user?.rol === "admin" && (
-          <>
-            <h3>Registrar Médico</h3>
-
-            <input
-              type="text"
-              name="nombreMedico"
-              placeholder="Nombre del médico"
-              value={formData.nombreMedico || ""}
-              onChange={handleChange}
-              required
-            />
-
-            <input
-              type="text"
-              name="apellidoMedico"
-              placeholder="Apellido del médico"
-              value={formData.apellidoMedico || ""}
-              onChange={handleChange}
-              required
-            />
-
-            {/* Selección de especialidad desde la tabla especialidad */}
-            <select
-              name="id_especialidad"
-              value={formData.id_especialidad || ""}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Selecciona especialidad</option>
-              <option value="1">Médico clínico</option>
-              <option value="2">Pediatra</option>
-              <option value="3">Traumatólogo</option>
-            </select>
-          </>
-        )}
-        {/* 👆 fin del bloque solo visible para el admin */}
-
-        <button type="submit">Registro</button>
+        <select name="rol" value={formData.rol} onChange={handleChange}>
+          <option value="paciente">Paciente</option>
+          <option value="medico">Médico</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button type="submit" disabled={loading}>
+          {loading ? "Registrando..." : "Registrarse"}
+        </button>
       </form>
-
-      <p className="signin-link">
-        Ya tienes una cuenta? <a href="/signin">Login</a>
-      </p>
     </div>
   );
 }

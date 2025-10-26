@@ -1,111 +1,76 @@
+// src/components/SignIn/SignIn.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ⬅️ Nuevo: Importamos para redirección limpia
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { loginAPI } from "../../services/apiServices.js";
+import { useAuth } from "../../context/AuthContext";
 import "./SignIn.css";
 
-// 💡 Nota: Asegúrate de que 'setUser' actualice tu AuthContext o estado global
-function SignIn({ setUser }) { 
-    
-    // 1. Inicializamos useNavigate
-    const navigate = useNavigate();
-    
-    // Estado para guardar email y password
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-    });
+function SignIn() {
+  const navigate = useNavigate();
+  const { login } = useAuth(); // 🔹 Contexto para guardar usuario y token
 
-    // Actualiza el estado cuando el usuario escribe
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    // Se ejecuta al presionar el botón "Login"
-    const handleSubmit = async (e) => {
-        e.preventDefault(); 
-        console.log("Intentando Login:", formData);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-        try {
-            // Petición POST al backend (Usamos la URL corregida: http://localhost:3000/usuario/login)
-            const response = await fetch("http://localhost:3000/usuario/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(formData),
-            });
+    try {
+      const body = await loginAPI({ email, password });
 
-            const data = await response.json(); 
-            console.log("Datos recibidos del servidor:", data);
+      // 🔹 Guardamos usuario y token en contexto
+      login(body.token, body.usuario);
 
-            if (response.ok) {
-                alert("✅ Login exitoso");
+      // 🔹 Redirigir según rol
+      switch (body.usuario.rol) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "medico":
+          navigate("/medico");
+          break;
+        case "paciente":
+          navigate("/completar-perfil"); // o donde corresponda
+          break;
+        default:
+          navigate("/"); // fallback
+      }
 
-                // 🔑 CRÍTICO: Guarda el token en SESSION STORAGE (coincidiendo con apiServices.js)
-                if (data.token) {
-                    sessionStorage.setItem("token", data.token);
-                }
-                
-                // 2. Guardamos el usuario globalmente
-                // Asumiendo que el backend envía data.usuario, no data.user
-                // Si tu backend envía 'user', cambia data.usuario por data.user
-                const usuarioData = data.usuario || data.user; 
-                
-                if (usuarioData) {
-                    setUser(usuarioData);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Error en login");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                    // 3. Redirigimos usando navigate() según el rol
-                    if (usuarioData.rol === "admin") navigate("/admin");
-                    else if (usuarioData.rol === "medico") navigate("/medico");
-                    else navigate("/reservar"); // ⬅️ Redirección de paciente
-                } else {
-                    throw new Error("Respuesta del servidor incompleta (falta usuario/rol).");
-                }
-
-            } else {
-                // Si login incorrecto (401, 403)
-                alert("❌ Usuario o contraseña incorrectos. Mensaje: " + (data.mensaje || data.error));
-                console.error("Error de login:", data);
-            }
-        } catch (error) {
-            console.error("Error en la conexión o proceso de login:", error);
-            // Si el error es una falla de red (cors, servidor caído), se captura aquí.
-            alert("⚠️ No se pudo conectar con el servidor. Verifica que el backend esté activo.");
-        }
-    };
-
-    return (
-        <div className="signin-container">
-            <h2>Bienvenido de nuevo</h2>
-            <form onSubmit={handleSubmit} className="signin-form">
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Ingrese su email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                />
-
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Ingrese su password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                />
-
-                <button type="submit">Login</button>
-            </form>
-
-            <p className="signup-link">
-                No tienes una cuenta? <a href="/signup">Registrate</a>
-            </p>
-        </div>
-    );
+  return (
+    <div className="signin-container">
+      <h2>Iniciar Sesión</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? "Ingresando..." : "Iniciar Sesión"}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 export default SignIn;

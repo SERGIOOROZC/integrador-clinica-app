@@ -1,0 +1,133 @@
+/* -------------------------------------------------------------------------- */
+/* Contenedor Principal y Estilos de Tema Oscuro */
+/* -------------------------------------------------------------------------- */
+.completar-perfil-container {
+    /* Centrar la caja en la vista */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 85vh; 
+    padding: 20px;
+    box-sizing: border-box;
+
+    /* Estilos del tema oscuro */
+    max-width: 500px;
+    margin: 50px auto; /* Centrado vertical y horizontal */
+    padding: 30px;
+    background-color: #0d1117; /* Fondo oscuro principal */
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6); /* Sombra intensa */
+    color: #f3f4f6; /* Texto claro */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Título con Gradiente Animado */
+/* -------------------------------------------------------------------------- */
+.completar-perfil-container h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 25px;
+    
+    /* Configuración del gradiente */
+    background: linear-gradient(to right, #a8c0ff, #8294ff, #a8c0ff); /* Tonos de blanco y azul/morado claro */
+    background-size: 200% auto; /* Necesario para la animación */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient 6s linear infinite;
+}
+
+.completar-perfil-container p {
+    color: #a1a1a1; /* Gris suave para descripciones */
+    margin-bottom: 25px;
+    text-align: center;
+    max-width: 400px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Estilos del Formulario */
+/* -------------------------------------------------------------------------- */
+.completar-perfil-container form {
+    background-color: transparent; /* Fondo transparente dentro del contenedor */
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre elementos */
+}
+
+.completar-perfil-container label {
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #e5e7eb; /* Color claro para la etiqueta */
+}
+
+/* -------------------------------------------------------------------------- */
+/* Inputs */
+/* -------------------------------------------------------------------------- */
+.completar-perfil-container input {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #374151; /* Borde gris oscuro */
+    background-color: #1f2937; /* Fondo del input ligeramente más claro que el contenedor */
+    color: #f3f4f6; /* Texto del input */
+    font-size: 1rem;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.completar-perfil-container input:focus {
+    outline: none;
+    border-color: #6366f1; /* Color primario (Morado/Índigo) al enfocar */
+    box-shadow: 0 0 5px #6366f1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Botón de Enviar */
+/* -------------------------------------------------------------------------- */
+.completar-perfil-container button {
+    width: 100%;
+    padding: 12px;
+    background-color: #6366f1; /* Color primario */
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.completar-perfil-container button:hover:not([disabled]) {
+    background-color: #4f46e5; /* Tono más oscuro al pasar el ratón */
+}
+
+.completar-perfil-container button:disabled {
+    background-color: #9ca3af; /* Gris de deshabilitado */
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Animación de Gradiente */
+/* -------------------------------------------------------------------------- */
+@keyframes gradient {
+    0% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+    100% { background-position: 0% center; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Para asegurar que el formulario tiene una estructura simple para este CSS */
+/* -------------------------------------------------------------------------- */
+/* Si usas divs para agrupar Label e Input, debes modificar la estructura del form */
+/* Si tu JSX es:
+   <form>
+     <label>...</label>
+     <input>...</input>
+     <label>...</label>
+     <input>...</input>
+   </form>
+   entonces este CSS funciona bien.
+*/

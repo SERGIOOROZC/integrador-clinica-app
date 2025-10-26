@@ -1,50 +1,67 @@
-//import { Router } from "express"; //Creás un router (un objeto especial de Express) donde vas a ir 
-// registrando las rutas relacionadas con "turnos".
-//import { listarTurnos, nuevoTurno, borrarTurno } from "../controllers/turno.controller.js";
-
-//const router = Router();
-
-//B. que acciones?
-//no hay logica si viene un GET mandalo a listarTurnos 
-
-//router.get("/", listarTurnos);         //dame todos los turnos
-//router.post("/", nuevoTurno);          //crear un nuevo turno
-//router.delete("/:id", borrarTurno);    //borrar turno
-
-//export default router; //para que lo use app.js
-
-// console.log(router); esto fue para ver el objeto por terminal
-
-
 import { Router } from "express";
 import {
-  listarTurnos,
-  nuevoTurno,
-  borrarTurno,
-  actualizarTurno
+    listarTurnos,
+    nuevoTurno,
+    borrarTurno,
+    actualizarTurno
 } from "../controllers/turno.controller.js";
 import { validarTurno } from "../middleware/validaciones.js";
 import { autenticarJWT, autorizarRol } from "../middleware/auth.js";
 
-
 const router = Router();
 
+// =========================================================
+// 🔹 LISTAR TURNOS
+// =========================================================
+// - Admin ve TODOS los turnos.
+// - Médico ve SOLO sus turnos asignados.
+// - Paciente ve SOLO sus turnos propios.
+// (El filtrado se maneja dentro del controlador según el rol del token)
+router.get(
+    "/",
+    autenticarJWT,
+    autorizarRol(["admin", "medico", "paciente"]),
+    listarTurnos
+);
 
-// 🔹 Listar turnos
-// Admin ve todos, médico ve sus turnos, paciente ve sus propios turnos
-router.get("/", autenticarJWT, autorizarRol(["admin", "medico", "paciente"]), listarTurnos);
+// =========================================================
+// 🔹 CREAR TURNO
+// =========================================================
+// - Solo "admin" y "paciente" pueden crear turnos.
+// - Los médicos no pueden autogenerarse un turno.
+// - Se valida la estructura de datos (fecha, hora, etc.) con `validarTurno`.
+router.post(
+    "/",
+    autenticarJWT,
+    autorizarRol(["admin", "paciente"]),
+    validarTurno,
+    nuevoTurno
+);
 
-// 🔹 Crear turno
-// Solo admin o médico pueden crear turnos
-router.post("/", autenticarJWT, autorizarRol(["admin", "medico"]), validarTurno, nuevoTurno);
+// =========================================================
+// 🔹 BORRAR TURNO
+// =========================================================
+// - Solo "admin" y "medico" pueden eliminar turnos.
+// - Se usa DELETE con el ID en la URL (ej: /turno/12)
+router.delete(
+    "/:id",
+    autenticarJWT,
+    autorizarRol(["admin", "medico"]),
+    borrarTurno
+);
 
-// 🔹 Borrar turno
-// Solo admin o médico pueden borrar
-router.delete("/:id", autenticarJWT, autorizarRol(["admin", "medico"]), borrarTurno);
-
-
-// 🔹 4. Editar/Actualizar turno (PUT)
-// Solo admin o médico pueden editar. Requiere autenticación y validación.
-router.put("/:id", autenticarJWT, autorizarRol(["admin", "medico"]), validarTurno, actualizarTurno);
+// =========================================================
+// 🔹 ACTUALIZAR / EDITAR TURNO
+// =========================================================
+// - Solo "admin" y "medico" pueden modificar turnos.
+// - Por ejemplo: actualizar estado (Pendiente, Atendido, Cancelado).
+// - Valida formato de datos antes de actualizar.
+router.put(
+    "/:id",
+    autenticarJWT,
+    autorizarRol(["admin", "medico"]),
+    validarTurno,
+    actualizarTurno
+);
 
 export default router;

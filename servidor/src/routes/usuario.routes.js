@@ -9,7 +9,7 @@
 
 
 import { Router } from "express";
-import { listarUsuarios, crearUsuario, loginUsuario } from "../controllers/usuario.controller.js";
+import { listarUsuarios, crearUsuario, loginUsuario,eliminarUsuario } from "../controllers/usuario.controller.js";
 import { validarUsuario, validarLogin } from "../middleware/validaciones.js";
 import { autenticarJWT, autorizarRol } from "../middleware/auth.js";
 
@@ -17,6 +17,9 @@ const router = Router();
 
 // 🔹 Solo los admin pueden listar usuarios
 router.get("/", autenticarJWT, autorizarRol(["admin"]), listarUsuarios);
+
+// 🔹 NUEVA RUTA: Eliminar usuario (solo admin)
+router.delete("/:id", autenticarJWT, autorizarRol(["admin"]), eliminarUsuario);
 
 // 🔹 Cualquier persona puede registrarse (crear usuario)
 router.post("/", validarUsuario, crearUsuario);

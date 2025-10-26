@@ -1,0 +1,81 @@
+/* src/components/CalendarioTurnos.css */
+
+/* Contenedor principal del calendario */
+.calendario-turnos-container {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 700px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-family: 'Arial', sans-serif;
+}
+
+/* Título del calendario */
+.calendario-turnos-container h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Estilos del calendario react-calendar */
+.react-calendar {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.react-calendar__tile--active {
+    background: #007bff;
+    color: white;
+    border-radius: 5px;
+}
+
+/* Contenedor de horarios */
+.horarios-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Botones de horarios */
+.horario-btn {
+    margin: 5px;
+    padding: 10px 15px;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    background-color: white;
+    color: #007bff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.horario-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.horario-btn.seleccionado {
+    background-color: #0056b3;
+    color: white;
+    border-color: #0056b3;
+}
+
+/* Mensajes de estado */
+.horarios-container p {
+    margin-top: 10px;
+    color: #555;
+}
+
+/* Responsivo para móviles */
+@media (max-width: 480px) {
+    .calendario-turnos-container {
+        padding: 15px;
+    }
+
+    .horario-btn {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+}

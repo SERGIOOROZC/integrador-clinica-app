@@ -1,170 +1,260 @@
 // src/services/apiServices.js
 
 // 🔑 Configuración: URL base de tu backend
-// Importante: No lleva '/api' para que coincida con la configuración de tu app.js
-const BASE_URL = 'http://localhost:3000'; 
+export const BASE_URL = 'http://localhost:3000';
 
 // =========================================================
-// 1. AUTENTICACIÓN (LOGIN)
+// FUNCIÓN AUXILIAR: Obtener Token
 // =========================================================
+const getToken = () => {
+  return localStorage.getItem('token');
+};
 
-/**
- * Función para INICIAR SESIÓN
- * @param {object} credenciales - { email, password }
- */
+// =========================================================
+// 1. AUTENTICACIÓN (LOGIN) - NO REQUIERE TOKEN
+// =========================================================
 export const loginAPI = async (credenciales) => {
-    // La URL es http://localhost:3000/usuario/login
-    const url = `${BASE_URL}/usuario/login`; 
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(credenciales),
-        });
-
-        const body = await response.json();
-
-        if (response.ok) {
-            // Devuelve el objeto con token, usuario, etc.
-            return body; 
-        } else {
-            // Manejo de errores 400/500 del backend
-            throw new Error(body.error || body.mensaje || "Credenciales incorrectas o error desconocido.");
-        }
-    } catch (error) {
-        console.error("Error en loginAPI:", error);
-        throw error;
+  const url = `${BASE_URL}/usuario/login`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credenciales),
+    });
+    const body = await response.json();
+    if (response.ok) {
+      return body;
+    } else {
+      throw new Error(body.error || body.mensaje || "Credenciales incorrectas o error desconocido.");
     }
+  } catch (error) {
+    console.error("Error en loginAPI:", error);
+    throw error;
+  }
 };
 
+// =========================================================
+// 2. USUARIOS / PACIENTES
+// =========================================================
+export const registrarUsuarioAPI = async (usuario) => {
+  try {
+    const url = `${BASE_URL}/usuario`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`
+      },
+      body: JSON.stringify(usuario)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error registrando usuario");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const obtenerPacientesAPI = async () => {
+  try {
+    const url = `${BASE_URL}/paciente`;
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al obtener pacientes");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
 
 // =========================================================
-// 2. MÉDICOS (Listado para Reserva)
+// 3. MÉDICOS
 // =========================================================
-
-/**
- * Función para OBTENER la lista completa de médicos.
- * @returns {Promise<Array>} Un array de objetos médico.
- */
 export const obtenerMedicosAPI = async () => {
-    
-    const token = sessionStorage.getItem('token'); 
-    
-    if (!token) {
-        throw new Error("No estás autenticado para ver la lista de médicos.");
-    }
-
-    try {
-        // RUTA: http://localhost:3000/medico
-        const url = `${BASE_URL}/medico`; 
-        
-        const parametros = {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
-            },
-        };
-
-        const response = await fetch(url, parametros);
-        const body = await response.json();
-
-        if (response.ok) {
-            // Retornamos body.medicos que es el array devuelto por el backend
-            return body.medicos || []; 
-        } else {
-            throw new Error(body.error || "No se pudo cargar la lista de médicos."); 
-        }
-    } catch (error) {
-        console.error("Error al obtener médicos:", error);
-        throw error;
-    }
+  try {
+    const url = `${BASE_URL}/medico`;
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al obtener médicos");
+    return data.medicos || data || [];
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 };
 
-
 // =========================================================
-// 3. TURNOS (Creación y Consulta)
+// 4. TURNOS
 // =========================================================
-
-/**
- * Función para CREAR un turno
- * @param {object} datosTurno - Incluye id_medico, id_paciente, fecha, hora, etc.
- */
 export const crearTurnoAPI = async (datosTurno) => {
-    
-    const token = sessionStorage.getItem('token'); 
-    
-    if (!token) {
-        throw new Error("No estás autenticado para crear un turno.");
-    }
+  try {
+    const url = `${BASE_URL}/turno`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`
+      },
+      body: JSON.stringify(datosTurno)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al crear turno");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
 
+export const obtenerTurnosAPI = async (filtros = {}) => {
+  try {
+    let query = new URLSearchParams(filtros).toString();
+    const url = `${BASE_URL}/turno?${query}`;
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al obtener turnos");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+// 💡 NUEVA FUNCIÓN: Actualizar un turno (usada para Confirmar)
+export const actualizarTurnoAPI = async (id, datosActualizados) => {
     try {
-        // RUTA: http://localhost:3000/turnos
-        const url = `${BASE_URL}/turno`; // Usamos '/turno' ya que app.js usa ese prefijo
-        
-        const parametros = {
-            method: "POST", 
+        const url = `${BASE_URL}/turno/${id}`;
+        // 🛠️ Usamos el método PUT, que es el estándar para reemplazar la data de un recurso.
+        const response = await fetch(url, {
+            method: "PUT", 
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
+                "Authorization": `Bearer ${getToken()}`
             },
-            body: JSON.stringify(datosTurno) 
-        };
-
-        const response = await fetch(url, parametros);
-        const body = await response.json();
-
-        if (response.ok) {
-            return body; 
-        } else {
-            throw new Error(body.error || "No se pudo crear el turno."); 
-        }
-    } catch (error) {
-        console.error("Error al crear turno:", error);
-        throw error;
+            body: JSON.stringify(datosActualizados)
+        });
+        const data = await response.json();
+        // 🛑 Si el servidor no responde OK (200), lanzamos un error claro.
+        if (!response.ok) throw new Error(data.error || "Error al actualizar turno");
+        return data;
+    } catch (err) {
+        console.error("Error en actualizarTurnoAPI:", err);
+        throw err;
     }
 };
 
-/**
- * Función para obtener la lista de turnos
- * @param {object} filtros - Opcional. Usado para filtrar.
- */
-export const obtenerTurnosAPI = async (filtros = {}) => {
-    
-    const token = sessionStorage.getItem('token'); 
-    
-    if (!token) {
-        throw new Error("No estás autenticado.");
-    }
-
-    // Construir los parámetros de consulta (Query Params)
-    let queryParams = new URLSearchParams(filtros).toString();
-    
+// 💡 NUEVA FUNCIÓN: Eliminar un turno (la centralizamos aquí)
+export const eliminarTurnoAPI = async (id) => {
     try {
-        // RUTA: http://localhost:3000/turnos
-        const url = `${BASE_URL}/turno?${queryParams}`; 
-        
-        const parametros = {
-            method: "GET",
+        const url = `${BASE_URL}/turno/${id}`;
+        // 🗑️ Usamos el método DELETE, el estándar para borrar un recurso.
+        const response = await fetch(url, {
+            method: "DELETE",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
-            },
-        };
-
-        const response = await fetch(url, parametros);
-        const body = await response.json();
-
-        if (response.ok) {
-            return body; 
-        } else {
-            throw new Error(body.error || "No se pudo cargar la lista de turnos."); 
+                "Authorization": `Bearer ${getToken()}`
+            }
+        });
+        // ⚠️ Nota: A veces, un DELETE exitoso no devuelve un JSON, por eso revisamos 'response.ok'.
+        if (!response.ok) {
+             const data = await response.json(); // Intentamos leer el error
+             throw new Error(data.error || "Error al eliminar turno");
         }
-    } catch (error) {
-        console.error("Error al obtener turnos:", error);
-        throw error;
+        // Si todo salió bien, devolvemos un mensaje de éxito.
+        return { mensaje: `Turno ${id} eliminado correctamente` };
+    } catch (err) {
+        console.error("Error en eliminarTurnoAPI:", err);
+        throw err;
     }
+};
+
+// =========================================================
+// 5. ESPECIALIDADES
+// =========================================================
+export const obtenerEspecialidadesAPI = async () => {
+  try {
+    const url = `${BASE_URL}/especialidad`;
+    const response = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al obtener especialidades");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const crearEspecialidadAPI = async (nombre) => {
+  try {
+    const url = `${BASE_URL}/especialidad`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`
+      },
+      body: JSON.stringify({ nombre })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al crear especialidad");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const actualizarEspecialidadAPI = async (id, nombre) => {
+  try {
+    const url = `${BASE_URL}/especialidad/${id}`;
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`
+      },
+      body: JSON.stringify({ nombre })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al actualizar especialidad");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const eliminarEspecialidadAPI = async (id) => {
+  try {
+    const url = `${BASE_URL}/especialidad/${id}`;
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Error al eliminar especialidad");
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 };

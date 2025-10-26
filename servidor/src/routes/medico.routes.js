@@ -4,47 +4,79 @@ import { Router } from "express";
 import {
   registrarMedico,
   verTurnosMedico,
-  listarMedicos, // 🔑 Función para listar todos los médicos
+  listarMedicos,
+  actualizarMedico, // ✅ CRUD: actualizar
+  eliminarMedico,   // ✅ CRUD: eliminar
 } from "../controllers/medico.controller.js";
+
 import { validarMedico } from "../middleware/validaciones.js";
 import { autenticarJWT, autorizarRol } from "../middleware/auth.js";
 
 const router = Router();
 
-// ==========================================================
-// RUTA 1: OBTENER LISTA DE MÉDICOS (Para el Paciente/Admin)
-// ==========================================================
-// Mapea a: GET /api/medico
-// Permite que un usuario logueado (paciente o admin) vea la lista para reservar.
+/* ==========================================================
+   🩺 1. OBTENER LISTA DE MÉDICOS (GET /api/medico)
+   ----------------------------------------------------------
+   - Permite listar todos los médicos con su especialidad.
+   - Usado por pacientes para reservar turno o por admin.
+   ========================================================== */
 router.get(
   "/",
-  autenticarJWT, // Requiere que el usuario esté autenticado
-  listarMedicos // Llama al controlador que consulta la DB
+  autenticarJWT,  // Requiere token válido
+  listarMedicos   // Controlador: obtiene médicos del modelo
 );
 
 
-// ==========================================================
-// RUTA 2: REGISTRAR UN NUEVO MÉDICO
-// ==========================================================
-// Mapea a: POST /api/medico
-// Solo accesible por el administrador.
+/* ==========================================================
+   ➕ 2. REGISTRAR NUEVO MÉDICO (POST /api/medico)
+   ----------------------------------------------------------
+   - Solo puede hacerlo el ADMIN.
+   - Usa validación del body y middleware de autenticación.
+   ========================================================== */
 router.post(
   "/",
   autenticarJWT,
-  autorizarRol(["admin"]), // Solo rol 'admin'
-  validarMedico,
+  autorizarRol(["admin"]), // Solo el admin puede registrar médicos
+  validarMedico,           // Verifica campos requeridos (nombre, especialidad, etc.)
   registrarMedico
 );
 
-// ==========================================================
-// RUTA 3: VER TURNOS DE UN MÉDICO ESPECÍFICO
-// ==========================================================
-// Mapea a: GET /api/medico/:id/turnos
-// Accesible por el propio médico o por un administrador.
+
+/* ==========================================================
+   ✏️ 3. ACTUALIZAR MÉDICO EXISTENTE (PUT /api/medico/:id)
+   ----------------------------------------------------------
+   - Solo el ADMIN puede editar los datos de un médico.
+   ========================================================== */
+router.put(
+  "/:id",
+  autenticarJWT,
+  autorizarRol(["admin"]),
+  actualizarMedico
+);
+
+
+/* ==========================================================
+   ❌ 4. ELIMINAR MÉDICO (DELETE /api/medico/:id)
+   ----------------------------------------------------------
+   - Solo el ADMIN puede eliminar un médico.
+   ========================================================== */
+router.delete(
+  "/:id",
+  autenticarJWT,
+  autorizarRol(["admin"]),
+  eliminarMedico
+);
+
+
+/* ==========================================================
+   📅 5. VER TURNOS DE UN MÉDICO (GET /api/medico/:id/turnos)
+   ----------------------------------------------------------
+   - El propio médico o el admin puede consultar sus turnos.
+   ========================================================== */
 router.get(
   "/:id/turnos",
   autenticarJWT,
-  autorizarRol(["admin", "medico"]), // Solo roles 'admin' o 'medico'
+  autorizarRol(["admin", "medico"]),
   verTurnosMedico
 );
 
