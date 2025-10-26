@@ -1,4 +1,3 @@
-// src/models/turno.models.js
 import db from "../config/db.js";
 
 /**
@@ -6,7 +5,7 @@ import db from "../config/db.js";
  * - Realiza JOINs para devolver datos enriquecidos (nombre paciente, nombre medico, especialidad).
  * - Acepta filtros opcionales: { id_medico, id_paciente }
  * - Devuelve un array de objetos con las propiedades:
- *   { id_turno, fecha, hora, estado, observaciones, id_medico, medico, especialidad, id_paciente, paciente }
+ * { id_turno, fecha, hora, estado, observaciones, id_medico, medico, especialidad, id_paciente, paciente }
  */
 export const obtenerTurnos = async (filtros = {}) => {
   let query = `
@@ -30,18 +29,11 @@ export const obtenerTurnos = async (filtros = {}) => {
       CONCAT(up.nombre, ' ', up.apellido) AS paciente
 
     FROM turno t
-
-    -- Relacion con medico -> usuario (nombre/apellido)
     JOIN medico m ON t.id_medico = m.id_medico
     JOIN usuario um ON m.id_usuario = um.id_usuario
-
-    -- Especialidad del médico. LEFT JOIN para no perder turnos si falta especialidad.
     LEFT JOIN especialidad e ON m.id_especialidad = e.id_especialidad
-
-    -- Paciente y su usuario (puede ser null si no hay paciente asignado)
     LEFT JOIN paciente p ON t.id_paciente = p.id_paciente
     LEFT JOIN usuario up ON p.id_usuario = up.id_usuario
-
     WHERE 1 = 1
   `;
 
@@ -73,8 +65,8 @@ export const obtenerTurnos = async (filtros = {}) => {
  * Modelo: crearTurno
  * - Inserta un nuevo turno en la tabla 'turno'.
  * - Mapea 'motivo' -> 'observaciones'.
- * - Forzar 'estado' desde el controlador (se espera que el controlador lo provea o fije).
- * - Devuelve un objeto representando el nuevo turno (incluye id_turno).
+ * - Forzar 'estado' desde el controlador.
+ * - Devuelve un objeto representando el nuevo turno.
  */
 export const crearTurno = async (turno) => {
   const { id_paciente, id_medico, fecha, hora, estado, motivo } = turno;
@@ -83,12 +75,10 @@ export const crearTurno = async (turno) => {
   try {
     const [result] = await db.query(
       `INSERT INTO turno (id_paciente, id_medico, fecha, hora, estado, observaciones)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?)`,
       [id_paciente, id_medico, fecha, hora, estado, observaciones_valor]
     );
 
-    // Retornamos un objeto sencillo; si quieres la fila completa con joins, 
-    // puedes hacer un SELECT posterior usando obtenerTurnoPorId (no implementado aquí).
     return {
       id_turno: result.insertId,
       id_paciente,
@@ -99,10 +89,7 @@ export const crearTurno = async (turno) => {
       observaciones: observaciones_valor,
     };
   } catch (error) {
-    console.error("--- ERROR CRÍTICO EN MODELO CREAR TURNO (SQL) ---");
-    console.error("Datos Intentados:", turno);
-    console.error("Error SQL:", error.message);
-    console.error("-------------------------------------------------");
+    console.error("--- ERROR CREAR TURNO ---", error);
     throw new Error("Fallo en la inserción de la base de datos.");
   }
 };
@@ -110,13 +97,13 @@ export const crearTurno = async (turno) => {
 /**
  * Modelo: eliminarTurno
  * - Borra un turno por id_turno.
- * - Devuelve un objeto con mensaje o lanza error si no existe.
+ * - Devuelve mensaje o lanza error si no existe.
  */
 export const eliminarTurno = async (id_turno) => {
   try {
     const [result] = await db.query("DELETE FROM turno WHERE id_turno = ?", [id_turno]);
     if (result.affectedRows === 0) {
-      throw new Error("No se encontró el turno para eliminar");
+      throw new Error("NoEncontrado: No se encontró el turno para eliminar"); 
     }
     return { mensaje: "Turno eliminado" };
   } catch (error) {
@@ -128,13 +115,10 @@ export const eliminarTurno = async (id_turno) => {
 /**
  * Modelo: actualizarTurno
  * - Actualiza campos presentes en el objeto 'turno'.
- * - Construye un UPDATE dinámico para evitar requerir todos los campos.
- * - Retorna un objeto con id_turno y los campos aplicados.
+ * - Devuelve el turno completo con JOINs para frontend.
  */
 export const actualizarTurno = async (id_turno, turno = {}) => {
-  // Campos permitidos para actualizar en la tabla turno
   const camposPermitidos = ["id_paciente", "id_medico", "fecha", "hora", "estado", "observaciones"];
-
   const setParts = [];
   const valores = [];
 
@@ -145,25 +129,49 @@ export const actualizarTurno = async (id_turno, turno = {}) => {
     }
   }
 
+  // X     setParts.push("fecha_modificacion = NOW()");
+
   if (setParts.length === 0) {
-    throw new Error("No se proporcionaron campos para actualizar");
+    throw new Error("No se proporcionaron campos válidos para actualizar");
   }
 
-  const sql = `UPDATE turno SET ${setParts.join(", ")} WHERE id_turno = ?`;
+  const sqlUpdate = `UPDATE turno SET ${setParts.join(", ")} WHERE id_turno = ?`;
   valores.push(id_turno);
 
   try {
-    const [result] = await db.query(sql, valores);
+    const [result] = await db.query(sqlUpdate, valores);
 
     if (result.affectedRows === 0) {
-      throw new Error("No se encontró el turno para actualizar");
+      throw new Error("NoEncontrado: No se encontró el turno para actualizar");
     }
 
-    // Retornamos un objeto simple; si necesitas la fila completa con joins,
-    // luego podemos hacer un SELECT similar al de obtenerTurnos filtrando por id_turno.
-    return { id_turno, ...turno };
+    // 🔹 Retornamos el turno completo con JOINs
+    const sqlSelect = `
+      SELECT 
+        t.id_turno,
+        t.fecha,
+        t.hora,
+        t.estado,
+        t.observaciones,
+        m.id_medico,
+        CONCAT(um.nombre, ' ', um.apellido) AS medico,
+        e.id_especialidad,
+        e.nombre AS especialidad,
+        p.id_paciente,
+        CONCAT(up.nombre, ' ', up.apellido) AS paciente
+      FROM turno t
+      JOIN medico m ON t.id_medico = m.id_medico
+      JOIN usuario um ON m.id_usuario = um.id_usuario
+      LEFT JOIN especialidad e ON m.id_especialidad = e.id_especialidad
+      LEFT JOIN paciente p ON t.id_paciente = p.id_paciente
+      LEFT JOIN usuario up ON p.id_usuario = up.id_usuario
+      WHERE t.id_turno = ?
+    `;
+    const [rows] = await db.query(sqlSelect, [id_turno]);
+
+    return rows[0];
   } catch (error) {
-    console.error("Error al actualizar turno (modelo):", error);
+    console.error("Error al actualizar turno:", error);
     throw error;
   }
 };
@@ -182,7 +190,6 @@ export const verificarDisponibilidad = async (id_medico, fecha, hora) => {
         AND hora = ?
         AND estado IN ('Pendiente', 'Confirmado')
     `;
-
     const [rows] = await db.query(query, [id_medico, fecha, hora]);
     return rows[0].count > 0;
   } catch (error) {
